@@ -7,12 +7,33 @@ export default function History() {
   const token = localStorage.getItem("token");
 
   useEffect(() => {
+    fetchHistory();
+  }, [token]);
+
+  const fetchHistory = () => {
     axios.get("http://localhost:5000/api/food/history", {
       headers: { Authorization: token }
     })
     .then(res => setItems(res.data))
     .catch(err => console.log(err));
-  }, [token]);
+  };
+
+  // 🚩 NEW: Function to handle filing complaints
+  const handleComplaint = async (foodId) => {
+    const reason = prompt("Describe the problem with this food (e.g., Spoiled, Wrong quantity):");
+    if (!reason) return;
+
+    try {
+      await axios.post("http://localhost:5000/api/complaints", 
+        { foodId, reason }, 
+        { headers: { Authorization: token } }
+      );
+      alert("Complaint submitted to Admin. 🛡️");
+    } catch (err) {
+      console.error(err);
+      alert("Error submitting complaint.");
+    }
+  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -74,6 +95,18 @@ export default function History() {
                   )}
                 </div>
               </div>
+
+              {/* 🚩 NEW: Complaint Button logic inside the card */}
+              {role === 'ngo' && item.status === 'Accepted' && (
+                <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+                  <button 
+                    onClick={() => handleComplaint(item._id)}
+                    className="flex items-center gap-1 text-red-500 text-xs font-bold uppercase tracking-wider hover:bg-red-50 px-3 py-2 rounded-lg transition"
+                  >
+                    🚩 Report an issue
+                  </button>
+                </div>
+              )}
             </div>
           ))}
 
